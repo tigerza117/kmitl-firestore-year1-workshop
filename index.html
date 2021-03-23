@@ -4,69 +4,96 @@
         <script src=https://www.gstatic.com/firebasejs/8.3.1/firebase-app.js></script>
         <script src=https://www.gstatic.com/firebasejs/8.3.1/firebase-firestore.js></script>
 
-        <script>
-            // Helper script
-
-            /**
-             * * Main Runtime
-             * 
-             * ? Anything which related to DOM should be run in this callback.
-             */
-            const main = (callback) => {
-                document.addEventListener("DOMContentLoaded", callback, {
-                    once: true
-                })
-            },
-                /**
-                 * ? Shorten syntax for querying for element id
-                 */
-                id = (id) => {
-                    const reference = document.getElementById(id)
-
-                    return Object.assign(reference, {
-                        on: (event, callback) => {
-                            reference.addEventListener(event, callback)
-
-                            return () => reference.removeEventListener(event, callback)
-                        }
-                    })
-                }
-        </script>
         <script defer>
-            // Firebase Setup
             const firebaseConfig = {
-                /**
-                 * ! Place connection script here
-                 * ...
-                 */
+                // ...config here
+                apiKey: "AIzaSyDR11UN7ogMWsDCtHt_r8qAMpbQNoLAY0Y",
+                authDomain: "kmitl-test.firebaseapp.com",
+                projectId: "kmitl-test"
             }
 
             firebase.initializeApp(firebaseConfig)
 
             const firestore = firebase.firestore()
+            firestore.collection('posts').orderBy("when").startAfter(-1).limit(50).onSnapshot((snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    let doc = change.doc
+                    let {who, message, when} = doc.data()
+                    let elm = document.getElementById(doc.id)
+                    if (change.type === "added") {
+                        console.log("New data: ", doc.data())
+                        let msg = document.createElement("div");
+                        msg.classList.add("msg")
+                        msg.id = doc.id
+                        msg.innerText = `${who}[${when.toDate().toLocaleString()}]: ${message}`
+                        posts.appendChild(msg)
+                    }
+                    if (change.type === "modified") {
+                        console.log("Modified data: ", doc.data())
+                        elm.innerHTML = `<div class="msg" id=${doc.id}>${who}[${when.toDate().toLocaleString()}]: ${message}</div>`
+                    }
+                    if (change.type === "removed") {
+                        console.log("Removed data: ", change.doc.data())
+                        elm.remove()
+                    }
+                    posts.scrollTop = posts.scrollHeight
+                });
+            });
 
-            /**
-             * * Main Runtime
-             * 
-             * ? Anything which related to DOM should be run here.
-             */
-            main(() => {
-                /**
-                 * ? When element with id "read" is clicked.
-                 * ? The function will run.
-                 * */
-                id("read").on("click", () => {
-                    id("title").textContent = "Clicked"
+            const onPost = () => {
+                if (message.value != "") {
+                    firestore.collection('posts').add({
+                        "message": message.value,
+                        "who": who.value,
+                        "when": new Date(),
+                    })
+                }
+                message.value = ""
+            }
 
-                    /**
-                     * * Do something with Firestore here
-                     */
-                })
-            })
+            const onChangeName = (val) => {
+                console.log(val)
+                localStorage.setItem('name', val)
+            }
+
+            const Init = () => {
+            }
+
+            
         </script>
+
+        <style>
+            body {
+                margin: 0;
+            }
+            #posts {
+                overflow: scroll;
+                max-height: 50vh;
+            }
+            .msg {
+                background: yellow;
+                animation: add 1s forwards;
+            }
+            @keyframes add {
+                form {
+                    background: yellow;
+                }
+                to {
+                    background: white;
+                }
+            }
+        </style>
     </head>
     <body>
-        <h1 id=title>---</h1>
-        <button id=read>Read</button>
+        <!-- Body -->
+        <h1>My social</h1>
+        <div id="posts"></div>
+        <div>
+            <input id="who" oninput="onChangeName(this.value)"/>
+            <input id="message" />
+            <button onclick="onPost()">Post</button>
+        </div>
     </body>
+
+    <script>Init()</script>
 </html>
