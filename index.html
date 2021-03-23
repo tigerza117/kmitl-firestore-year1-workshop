@@ -12,33 +12,11 @@
                 projectId: "kmitl-test"
             }
 
+            let isLoad = true;
+
             firebase.initializeApp(firebaseConfig)
 
             const firestore = firebase.firestore()
-            firestore.collection('posts').orderBy("when").startAfter(-1).limit(50).onSnapshot((snapshot) => {
-                snapshot.docChanges().forEach((change) => {
-                    let doc = change.doc
-                    let {who, message, when} = doc.data()
-                    let elm = document.getElementById(doc.id)
-                    if (change.type === "added") {
-                        console.log("New data: ", doc.data())
-                        let msg = document.createElement("div");
-                        msg.classList.add("msg")
-                        msg.id = doc.id
-                        msg.innerText = `${who}[${when.toDate().toLocaleString()}]: ${message}`
-                        posts.appendChild(msg)
-                    }
-                    if (change.type === "modified") {
-                        console.log("Modified data: ", doc.data())
-                        elm.innerHTML = `<div class="msg" id=${doc.id}>${who}[${when.toDate().toLocaleString()}]: ${message}</div>`
-                    }
-                    if (change.type === "removed") {
-                        console.log("Removed data: ", change.doc.data())
-                        elm.remove()
-                    }
-                    posts.scrollTop = posts.scrollHeight
-                });
-            });
 
             const onPost = () => {
                 if (message.value != "") {
@@ -52,11 +30,40 @@
             }
 
             const onChangeName = (val) => {
-                console.log(val)
                 localStorage.setItem('name', val)
             }
 
             const Init = () => {
+                firestore.collection('posts').orderBy("when", "desc").limit(20).onSnapshot(async (snapshot) => {
+                    await snapshot.docChanges().forEach((change) => {
+                        let doc = change.doc
+                        let {who, message, when} = doc.data()
+                        let elm = document.getElementById(doc.id)
+                        if (change.type === "added") {
+                            console.log("New data: ", doc.data())
+                            let msg = document.createElement("div");
+                            msg.classList.add("msg")
+                            msg.id = doc.id
+                            msg.innerText = `${who}[${when.toDate().toLocaleString()}]: ${message}`
+                            console.log(isLoad);
+                            if (isLoad) {
+                                posts.prepend(msg)
+                            } else {
+                                posts.appendChild(msg)
+                            }
+                        }
+                        if (change.type === "modified") {
+                            console.log("Modified data: ", doc.data())
+                            elm.innerHTML = `<div class="msg" id=${doc.id}>${who}[${when.toDate().toLocaleString()}]: ${message}</div>`
+                        }
+                        if (change.type === "removed") {
+                            console.log("Removed data: ", change.doc.data())
+                            elm.remove()
+                        }
+                        posts.scrollTop = posts.scrollHeight
+                    });
+                    isLoad = false;
+                });
             }
 
             
