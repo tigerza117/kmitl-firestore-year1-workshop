@@ -37,7 +37,7 @@
                 firestore.collection('posts').orderBy("when", "desc").limit(20).onSnapshot(async (snapshot) => {
                     await snapshot.docChanges().forEach((change) => {
                         let doc = change.doc
-                        let {who, message, when} = doc.data()
+                        let { who, message, when } = doc.data()
                         let elm = document.getElementById(doc.id)
                         if (change.type === "added") {
                             console.log("New data: ", doc.data())
@@ -45,7 +45,6 @@
                             msg.classList.add("msg")
                             msg.id = doc.id
                             msg.innerText = `${who}[${when.toDate().toLocaleString()}]: ${message}`
-                            console.log(isLoad);
                             if (isLoad) {
                                 posts.prepend(msg)
                             } else {
