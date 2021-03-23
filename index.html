@@ -3,13 +3,15 @@
     <head>
         <script src=https://www.gstatic.com/firebasejs/8.3.1/firebase-app.js></script>
         <script src=https://www.gstatic.com/firebasejs/8.3.1/firebase-firestore.js></script>
+        <link rel="preconnect" href="https://fonts.gstatic.com">
+        <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap" rel="stylesheet">
 
         <script defer>
             const firebaseConfig = {
                 // ...config here
                 apiKey: "AIzaSyDR11UN7ogMWsDCtHt_r8qAMpbQNoLAY0Y",
-                authDomain: "kmitl-test.firebaseapp.com",
-                projectId: "kmitl-test"
+                authDomain: "happy-new-year-my-dear.firebaseapp.com",
+                projectId: "happy-new-year-my-dear"
             }
 
             let isLoad = true;
@@ -27,77 +29,199 @@
                     })
                 }
                 message.value = ""
+                return false;
             }
 
             const onChangeName = (val) => {
                 localStorage.setItem('name', val)
             }
 
+            const createPostEml = ({ id, who, message, when }) => {
+                let post = document.createElement("div")
+                let head = document.createElement("div")
+                let user = document.createElement("div")
+                let author = document.createElement("div")
+                let date = document.createElement("div")
+                let msg = document.createElement("div")
+                let avatar = document.createElement("img")
+                // avatar data
+                var randomColor = Math.floor(Math.random()*16777215).toString(16);
+                avatar.src = `https://ui-avatars.com/api/?name=${who}&background=${randomColor}&color=fff`
+                avatar.classList.add('avatar')
+                
+                // post data
+                post.id = id,
+                post.classList.add('post')
+                // auther data
+                author.classList.add('author')
+                author.innerText = who
+                user.appendChild(author)
+                // date data
+                date.classList.add('date')
+                date.innerText = when.toDate().toLocaleString()
+                user.appendChild(date)
+                // msg data 
+                msg.classList.add('msg')
+                msg.innerText = message
+                // add data
+                head.appendChild(avatar)
+                head.appendChild(user)
+                user.classList.add('user')
+                head.classList.add('head')
+
+                post.appendChild(head)
+                post.appendChild(msg)
+                return post
+            }
+
             const Init = () => {
                 firestore.collection('posts').orderBy("when", "desc").limit(20).onSnapshot(async (snapshot) => {
                     await snapshot.docChanges().forEach((change) => {
                         let doc = change.doc
-                        let { who, message, when } = doc.data()
                         let elm = document.getElementById(doc.id)
-                        if (change.type === "added") {
-                            console.log("New data: ", doc.data())
-                            let msg = document.createElement("div");
-                            msg.classList.add("msg")
-                            msg.id = doc.id
-                            msg.innerText = `${who}[${when.toDate().toLocaleString()}]: ${message}`
-                            if (isLoad) {
-                                posts.prepend(msg)
-                            } else {
-                                posts.appendChild(msg)
-                            }
+                        switch (change.type) {
+                            case "added":
+                                let post = createPostEml({id: doc.id, ...doc.data()})
+                                if (isLoad) {
+                                    posts.prepend(post)
+                                } else {
+                                    posts.appendChild(post)
+                                }
+                                break;
+                            case  "modified":
+                                elm = posts.replaceChild(createPostEml({id: doc.id, ...doc.data()}), elm)
+                                break;
+                            case "removed":
+                                elm.remove(createPostEml({id: doc.id, ...doc.data()}))
+                                break;
+                            default:
+                                break;
                         }
-                        if (change.type === "modified") {
-                            console.log("Modified data: ", doc.data())
-                            elm.innerHTML = `<div class="msg" id=${doc.id}>${who}[${when.toDate().toLocaleString()}]: ${message}</div>`
-                        }
-                        if (change.type === "removed") {
-                            console.log("Removed data: ", change.doc.data())
-                            elm.remove()
-                        }
-                        posts.scrollTop = posts.scrollHeight
+                        posts.scrollTop = posts.scrollHeight*10
                     });
                     isLoad = false;
                 });
             }
-
-            
         </script>
 
         <style>
             body {
                 margin: 0;
+                font-family: 'Kanit', sans-serif;
+            }
+            *, *:before, *:after {
+                box-sizing: border-box;
+            }
+            button, input, textarea {
+                background: none;
+                color: inherit;
+                border: none;
+                padding: 1em;
+                font: inherit;
+                cursor: pointer;
+                outline: inherit;
+                border-radius: 5px;
             }
             #posts {
                 overflow: scroll;
+                overflow-x: hidden;
                 max-height: 50vh;
+                padding: 0 2em;
             }
-            .msg {
-                background: yellow;
-                animation: add 1s forwards;
+            .post {
+                animation: add 2s forwards;
+                padding: 1em;
+                color:#222;
+                margin: 0.7em 0;
+                border-radius: 5px;
+                display: flex;
+                flex-wrap: wrap;
+                box-shadow: #999 0 0 2px 0px;
+                background: #FFF176;
             }
             @keyframes add {
                 form {
-                    background: yellow;
+                    background: #FFF176;
                 }
                 to {
                     background: white;
                 }
             }
+            .content {
+                max-width: 80vw;
+                width: 100%;
+                margin: auto;
+            }
+            @media only screen and (min-width: 1200px) {
+                .content {
+                    max-width: 625px;
+                }
+            }
+            .header > h1 {
+                text-align: center;
+                font-size: 50px;
+            }
+            .avatar {
+                height: 3em;
+                border-radius: 100%;
+            }
+            .date {
+                font-size: small;
+                color: #555;
+            }
+            .msg {
+                font-weight: 300;
+            }
+            .user {
+                margin-left: 1em;
+            }
+            .head {
+                width: 100%;
+                display: flex;
+                margin-bottom: 0.5em;
+            }
+            .panel {
+                padding: 1em;
+                margin-top: 1em;
+                border-radius: 5px;
+                box-shadow: #999 0 0 2px 0px;
+            }
+            .panel > form {
+            }
+            #who {
+                width: 100%;
+                margin: 0.5em 0;
+                box-shadow: #999 0 0 2px 0px;
+            }
+            #message {
+                width: 100%;
+                margin: 0.5em 0;
+                box-shadow: #999 0 0 2px 0px;
+            }
+            .panel button {
+                width: 100%;
+                display: block;
+                height: 3em;
+                background: #8BC34A;
+                color: white;
+                
+            }
         </style>
     </head>
     <body>
         <!-- Body -->
-        <h1>My social</h1>
-        <div id="posts"></div>
-        <div>
-            <input id="who" oninput="onChangeName(this.value)"/>
-            <input id="message" />
-            <button onclick="onPost()">Post</button>
+        <div class="header">
+            <h1>KLN</h1>
+        </div>
+        <div class="content">
+            <div id="posts"></div>
+            <div class="panel">
+                <form onsubmit="onPost(); return false;">
+                    <input id="who" placeholder="Name" oninput="onChangeName(this.value)"/>
+                    <textarea id="message" placeholder="message"></textarea>
+                    <button type="submit">Post</button>
+                </form>
+            </div>
         </div>
     </body>
 
